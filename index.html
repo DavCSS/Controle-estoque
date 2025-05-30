@@ -121,13 +121,26 @@
       localStorage.setItem("estoque", JSON.stringify(estoque));
     }
     let lucroTotal = parseFloat(localStorage.getItem("lucroTotal")) || 0;
-    let ultimaAcao = null;
+    let acoes = [];
 
     function atualizarResumo() {
       let totalRestante = Object.values(estoque).reduce((acc, v) => acc + v, 0);
       let totalInicial = produtos.reduce((acc, p) => acc + (historico[p.nome]?.length || 0) + estoque[p.nome], 0);
       document.getElementById("lucroTotal").innerText = lucroTotal.toFixed(2);
       document.getElementById("pecasRestantes").innerText = `${totalRestante} / ${totalInicial}`;
+    }
+
+    function atualizarHistoricoGeral() {
+      const geral = document.getElementById("historico-geral");
+      let allLogs = [];
+      Object.entries(historico).forEach(([nome, logs]) => {
+        const preco = produtos.find(p => p.nome === nome)?.preco || 0;
+        logs.forEach(hora => {
+          allLogs.push({ hora, nome, preco });
+        });
+      });
+      allLogs.sort((a, b) => a.hora.localeCompare(b.hora));
+      geral.innerHTML = allLogs.map(log => `${log.hora}: ${log.nome} - R$ ${log.preco.toFixed(2)}`).join("<br>");
     }
 
     function salvarDados() {
@@ -155,9 +168,10 @@
             historico[produto.nome] = historico[produto.nome] || [];
             const hora = new Date().toLocaleTimeString();
             historico[produto.nome].push(hora);
-            ultimaAcao = { nome: produto.nome, preco: produto.preco };
+            acoes.push({ nome: produto.nome, preco: produto.preco, hora });
             criarInterface();
             salvarDados();
+            atualizarHistoricoGeral();
           } else {
             alert("Produto esgotado!");
           }
@@ -191,36 +205,25 @@
 
     document.getElementById("btnHistoricoGeral").onclick = () => {
       const geral = document.getElementById("historico-geral");
-      if (geral.style.display === "block") {
-        geral.style.display = "none";
-        return;
-      }
-      let allLogs = [];
-      Object.entries(historico).forEach(([nome, logs]) => {
-        const preco = produtos.find(p => p.nome === nome)?.preco || 0;
-        logs.forEach(hora => {
-          allLogs.push({ hora, nome, preco });
-        });
-      });
-      allLogs.sort((a, b) => a.hora.localeCompare(b.hora));
-      geral.innerHTML = allLogs.map(log => `${log.hora}: ${log.nome} - R$ ${log.preco.toFixed(2)}`).join("<br>");
-      geral.style.display = "block";
+      geral.style.display = geral.style.display === "block" ? "none" : "block";
     };
 
     document.getElementById("btnDesfazer").onclick = () => {
-      if (!ultimaAcao || !historico[ultimaAcao.nome] || historico[ultimaAcao.nome].length === 0) {
+      const ultima = acoes.pop();
+      if (!ultima || !historico[ultima.nome] || historico[ultima.nome].length === 0) {
         alert("Nada para desfazer.");
         return;
       }
-      estoque[ultimaAcao.nome]++;
-      lucroTotal -= ultimaAcao.preco;
-      historico[ultimaAcao.nome].pop();
-      ultimaAcao = null;
+      estoque[ultima.nome]++;
+      lucroTotal -= ultima.preco;
+      historico[ultima.nome].pop();
       criarInterface();
       salvarDados();
+      atualizarHistoricoGeral();
     };
 
     criarInterface();
+    atualizarHistoricoGeral();
   </script>
 </body>
 </html>
