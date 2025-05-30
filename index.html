@@ -27,6 +27,10 @@
       text-align: center;
       position: relative;
       box-sizing: border-box;
+      transition: opacity 0.3s ease;
+    }
+    .produto.esgotado {
+      opacity: 0.4;
     }
     @media (max-width: 480px) {
       .produto {
@@ -77,6 +81,19 @@
       margin: 5px 5px 15px 0;
       font-size: 14px;
     }
+    #btnResetar {
+      background: #c62828;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin-top: 30px;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 95%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
   </style>
 </head>
 <body>
@@ -89,6 +106,7 @@
     <p>Lucro Total: R$ <span id="lucroTotal">0.00</span></p>
     <p>Peças Restantes: <span id="pecasRestantes"></span></p>
   </div>
+  <button id="btnResetar">⚠️ Resetar todos os dados (clique 2x)</button>
 
   <script>
     const produtos = [
@@ -124,8 +142,8 @@
     let acoes = [];
 
     function atualizarResumo() {
-      let totalRestante = Object.values(estoque).reduce((acc, v) => acc + v, 0);
-      let totalInicial = produtos.reduce((acc, p) => acc + (historico[p.nome]?.length || 0) + estoque[p.nome], 0);
+      const totalRestante = Object.values(estoque).reduce((acc, v) => acc + v, 0);
+      const totalInicial = produtos.reduce((acc, p) => acc + (historico[p.nome]?.length || 0) + estoque[p.nome], 0);
       document.getElementById("lucroTotal").innerText = lucroTotal.toFixed(2);
       document.getElementById("pecasRestantes").innerText = `${totalRestante} / ${totalInicial}`;
     }
@@ -157,6 +175,7 @@
         const div = document.createElement("div");
         div.className = "produto";
         div.style.backgroundColor = produto.cor;
+        if (estoque[produto.nome] === 0) div.classList.add("esgotado");
 
         const btn = document.createElement("button");
         btn.className = "btn-produto";
@@ -220,6 +239,17 @@
       criarInterface();
       salvarDados();
       atualizarHistoricoGeral();
+    };
+
+    let resetClicks = 0;
+    document.getElementById("btnResetar").onclick = () => {
+      resetClicks++;
+      if (resetClicks < 2) {
+        alert("Clique novamente para confirmar o reset dos dados.");
+        return;
+      }
+      localStorage.clear();
+      location.reload();
     };
 
     criarInterface();
