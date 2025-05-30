@@ -147,7 +147,7 @@
 
         const btn = document.createElement("button");
         btn.className = "btn-produto";
-        btn.innerText = produto.nome;
+        btn.innerText = `${produto.nome} - R$ ${produto.preco.toFixed(2)}`;
         btn.onclick = () => {
           if (estoque[produto.nome] > 0) {
             estoque[produto.nome]--;
@@ -177,7 +177,7 @@
 
         const historicoDiv = document.createElement("div");
         historicoDiv.className = "historico";
-        historicoDiv.innerHTML = (historico[produto.nome] || []).map(h => `<div>${h}</div>`).join("");
+        historicoDiv.innerHTML = (historico[produto.nome] || []).map(h => `<div>${h} - R$ ${produto.preco.toFixed(2)}</div>`).join("");
 
         div.appendChild(btnInfo);
         div.appendChild(btn);
@@ -197,12 +197,13 @@
       }
       let allLogs = [];
       Object.entries(historico).forEach(([nome, logs]) => {
+        const preco = produtos.find(p => p.nome === nome)?.preco || 0;
         logs.forEach(hora => {
-          allLogs.push({ hora, nome });
+          allLogs.push({ hora, nome, preco });
         });
       });
       allLogs.sort((a, b) => a.hora.localeCompare(b.hora));
-      geral.innerHTML = allLogs.map(log => `${log.hora}: ${log.nome}`).join("<br>");
+      geral.innerHTML = allLogs.map(log => `${log.hora}: ${log.nome} - R$ ${log.preco.toFixed(2)}`).join("<br>");
       geral.style.display = "block";
     };
 
