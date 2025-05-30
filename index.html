@@ -68,13 +68,13 @@
       margin: 20px 10px;
       font-size: 16px;
     }
-    #btnHistoricoGeral {
+    #btnHistoricoGeral, #btnDesfazer {
       background: #444;
       color: #fff;
       padding: 8px 12px;
       border: none;
       border-radius: 5px;
-      margin-bottom: 15px;
+      margin: 5px 5px 15px 0;
       font-size: 14px;
     }
   </style>
@@ -82,6 +82,7 @@
 <body>
   <h2>Controle de Produtos - Espaço Delas</h2>
   <button id="btnHistoricoGeral">Ver histórico geral</button>
+  <button id="btnDesfazer">Desfazer última ação</button>
   <div id="historico-geral" class="historico"></div>
   <div id="produtos" class="produtos-grid"></div>
   <div id="resumo">
@@ -120,6 +121,7 @@
       localStorage.setItem("estoque", JSON.stringify(estoque));
     }
     let lucroTotal = parseFloat(localStorage.getItem("lucroTotal")) || 0;
+    let ultimaAcao = null;
 
     function atualizarResumo() {
       let totalRestante = Object.values(estoque).reduce((acc, v) => acc + v, 0);
@@ -153,6 +155,7 @@
             historico[produto.nome] = historico[produto.nome] || [];
             const hora = new Date().toLocaleTimeString();
             historico[produto.nome].push(hora);
+            ultimaAcao = { nome: produto.nome, preco: produto.preco };
             criarInterface();
             salvarDados();
           } else {
@@ -201,6 +204,19 @@
       allLogs.sort((a, b) => a.hora.localeCompare(b.hora));
       geral.innerHTML = allLogs.map(log => `${log.hora}: ${log.nome}`).join("<br>");
       geral.style.display = "block";
+    };
+
+    document.getElementById("btnDesfazer").onclick = () => {
+      if (!ultimaAcao || !historico[ultimaAcao.nome] || historico[ultimaAcao.nome].length === 0) {
+        alert("Nada para desfazer.");
+        return;
+      }
+      estoque[ultimaAcao.nome]++;
+      lucroTotal -= ultimaAcao.preco;
+      historico[ultimaAcao.nome].pop();
+      ultimaAcao = null;
+      criarInterface();
+      salvarDados();
     };
 
     criarInterface();
