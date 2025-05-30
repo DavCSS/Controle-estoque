@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Produtos - Espaço Delas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      background: #fefefe;
+      color: #333;
+    }
+    .produtos-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .produto {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      width: 45%;
+      min-width: 140px;
+      text-align: center;
+      position: relative;
+    }
+    .btn-produto {
+      font-size: 14px;
+      padding: 8px;
+      width: 100%;
+      margin-bottom: 5px;
+    }
+    .quantidade {
+      font-size: 14px;
+      color: #555;
+    }
+    .info-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #ccc;
+      padding: 2px 5px;
+      border-radius: 5px;
+    }
+    .historico {
+      display: none;
+      text-align: left;
+      font-size: 12px;
+      margin-top: 5px;
+      max-height: 100px;
+      overflow-y: auto;
+      border-top: 1px dashed #ccc;
+      padding-top: 5px;
+    }
+    #resumo, #historico-geral {
+      margin: 20px 10px;
+      font-size: 16px;
+    }
+    #btnHistoricoGeral {
+      background: #444;
+      color: #fff;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Controle de Produtos - Espaço Delas</h2>
+  <button id="btnHistoricoGeral">Ver histórico geral</button>
+  <div id="historico-geral" class="historico"></div>
+  <div id="produtos" class="produtos-grid"></div>
+  <div id="resumo">
+    <p>Lucro Total: R$ <span id="lucroTotal">0.00</span></p>
+    <p>Peças Restantes: <span id="pecasRestantes"></span></p>
+  </div>
+
+  <script>
+    const produtos = [
+      { nome: "Cartela de Pompom Tom Pastel", preco: 10, qtd: 1, cor: '#FDE2E4' },
+      { nome: "Cartela de Pompom Stitch", preco: 10, qtd: 1, cor: '#E0F7FA' },
+      { nome: "Cartela de Laços do Stitch", preco: 10, qtd: 2, cor: '#E3F2FD' },
+      { nome: "Cartela com Laços e Pulseira", preco: 10, qtd: 1, cor: '#FFF9C4' },
+      { nome: "Tiaras com Personagens", preco: 17, qtd: 4, cor: '#F3E5F5' },
+      { nome: "Tiaras com Pompom", preco: 15, qtd: 4, cor: '#E8F5E9' },
+      { nome: "Tiaras Variadas", preco: 10, qtd: 8, cor: '#FFECB3' },
+      { nome: "Conjunto de Pompom", preco: 5, qtd: 5, cor: '#FFCDD2' },
+      { nome: "Laços com Faixas", preco: 8, qtd: 11, cor: '#C8E6C9' },
+      { nome: "Laços com Bicos de Pato", preco: 10, qtd: 21, cor: '#D1C4E9' },
+      { nome: "Piranhas", preco: 6, qtd: 12, cor: '#FFE0B2' },
+      { nome: "Piranhas Douradas", preco: 10, qtd: 2, cor: '#FFF176' },
+      { nome: "Laço de Cetim", preco: 12, qtd: 1, cor: '#FFCDD2' },
+      { nome: "Rabico de Cetim", preco: 8, qtd: 3, cor: '#E0F2F1' },
+      { nome: "Laço Piscina", preco: 10, qtd: 3, cor: '#B2EBF2' },
+      { nome: "Chapéu Junino", preco: 20, qtd: 2, cor: '#F0F4C3' },
+      { nome: "Laços Rosa", preco: 6, qtd: 2, cor: '#F8BBD0' },
+      { nome: "Pompom com Laço Dourado", preco: 8, qtd: 1, cor: '#FFF9C4' },
+      { nome: "Pompom com Laço", preco: 3, qtd: 12, cor: '#F3E5F5' },
+      { nome: "Liguinha Colorida", preco: 4, qtd: 3, cor: '#D7CCC8' }
+    ];
+
+    const historico = JSON.parse(localStorage.getItem("historico")) || {};
+    let estoque = JSON.parse(localStorage.getItem("estoque"));
+    if (!estoque) {
+      estoque = Object.fromEntries(produtos.map(p => [p.nome, p.qtd]));
+      localStorage.setItem("estoque", JSON.stringify(estoque));
+    }
+    let lucroTotal = parseFloat(localStorage.getItem("lucroTotal")) || 0;
+
+    function atualizarResumo() {
+      let totalRestante = Object.values(estoque).reduce((acc, v) => acc + v, 0);
+      let totalInicial = produtos.reduce((acc, p) => acc + (historico[p.nome]?.length || 0) + estoque[p.nome], 0);
+      document.getElementById("lucroTotal").innerText = lucroTotal.toFixed(2);
+      document.getElementById("pecasRestantes").innerText = `${totalRestante} / ${totalInicial}`;
+    }
+
+    function salvarDados() {
+      localStorage.setItem("historico", JSON.stringify(historico));
+      localStorage.setItem("lucroTotal", lucroTotal.toFixed(2));
+      localStorage.setItem("estoque", JSON.stringify(estoque));
+    }
+
+    function criarInterface() {
+      const container = document.getElementById("produtos");
+      container.innerHTML = "";
+
+      produtos.forEach((produto) => {
+        const div = document.createElement("div");
+        div.className = "produto";
+        div.style.backgroundColor = produto.cor;
+
+        const btn = document.createElement("button");
+        btn.className = "btn-produto";
+        btn.innerText = produto.nome;
+        btn.onclick = () => {
+          if (estoque[produto.nome] > 0) {
+            estoque[produto.nome]--;
+            lucroTotal += produto.preco;
+            historico[produto.nome] = historico[produto.nome] || [];
+            const hora = new Date().toLocaleTimeString();
+            historico[produto.nome].push(hora);
+            criarInterface();
+            salvarDados();
+          } else {
+            alert("Produto esgotado!");
+          }
+        };
+
+        const spanQtd = document.createElement("div");
+        spanQtd.className = "quantidade";
+        spanQtd.innerText = `Restante: ${estoque[produto.nome]}`;
+
+        const btnInfo = document.createElement("span");
+        btnInfo.className = "info-btn";
+        btnInfo.innerText = "info";
+        btnInfo.onclick = () => {
+          const historicoDiv = div.querySelector(".historico");
+          historicoDiv.style.display = historicoDiv.style.display === "block" ? "none" : "block";
+        };
+
+        const historicoDiv = document.createElement("div");
+        historicoDiv.className = "historico";
+        historicoDiv.innerHTML = (historico[produto.nome] || []).map(h => `<div>${h}</div>`).join("");
+
+        div.appendChild(btnInfo);
+        div.appendChild(btn);
+        div.appendChild(spanQtd);
+        div.appendChild(historicoDiv);
+        container.appendChild(div);
+      });
+
+      atualizarResumo();
+    }
+
+    document.getElementById("btnHistoricoGeral").onclick = () => {
+      const geral = document.getElementById("historico-geral");
+      if (geral.style.display === "block") {
+        geral.style.display = "none";
+        return;
+      }
+      let allLogs = [];
+      Object.entries(historico).forEach(([nome, logs]) => {
+        logs.forEach(hora => {
+          allLogs.push({ hora, nome });
+        });
+      });
+      allLogs.sort((a, b) => a.hora.localeCompare(b.hora));
+      geral.innerHTML = allLogs.map(log => `${log.hora}: ${log.nome}`).join("<br>");
+      geral.style.display = "block";
+    };
+
+    criarInterface();
+  </script>
+</body>
+</html>
